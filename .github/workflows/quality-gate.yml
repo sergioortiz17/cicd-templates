@@ -15,6 +15,10 @@ on:
         required: false
         type: string
         default: 'target/site/jacoco/jacoco.xml'
+      templates_repo:
+        required: false
+        type: string
+        default: 'sergioortiz17/cicd-templates'
     secrets:
       SONAR_HOST_URL:
         required: true
@@ -55,6 +59,22 @@ jobs:
         with:
           name: checkstyle-report
 
+      - name: Checkout cicd-templates
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.templates_repo }}
+          ref: main
+          path: cicd-templates
+
+      - name: Convert Checkstyle to Generic Issue Data
+        run: |
+          CHECKSTYLE_XML=$(find checkstyle-report -name '*.xml' -type f | head -1)
+          if [ -z "$CHECKSTYLE_XML" ]; then
+            echo '{"rules":[],"issues":[]}' > sonar-external-issues.json
+          else
+            python3 cicd-templates/scripts/checkstyle-to-generic-issues.py "$CHECKSTYLE_XML" sonar-external-issues.json
+          fi
+
       - name: Unit Tests
         run: mvn test -B
 
@@ -66,9 +86,8 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
-          CHECKSTYLE_FILE="checkstyle-report/$(basename '${{ inputs.checkstyle_report_path }}')"
           mvn sonar:sonar -B \
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
-            -Dsonar.java.checkstyle.reportPaths="$CHECKSTYLE_FILE" \
+            -Dsonar.externalIssuesReportPaths=sonar-external-issues.json \
             -Dsonar.coverage.jacoco.xmlReportPaths=${{ inputs.coverage_report_path }}
