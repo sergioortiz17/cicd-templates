@@ -4,6 +4,17 @@ Templates reutilizables de CI/CD para pipelines en GitHub Actions.
 
 ## Workflows disponibles
 
+### quality-gate.yml
+
+Pipeline de calidad: compile, unit tests y SonarQube.
+
+**Secrets:**
+- `SONAR_HOST_URL` - URL del servidor SonarQube (ej: http://X.X.X.X:9000)
+- `SONAR_TOKEN` - Token de SonarQube
+
+**Inputs:**
+- `java_version` (opcional) - Versión Java (default: 21)
+
 ### ecs-build-deploy.yml
 
 Pipeline para construir imagen Docker, subirla a Amazon ECR y desplegar en ECS.

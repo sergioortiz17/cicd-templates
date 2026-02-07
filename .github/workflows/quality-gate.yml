@@ -1,0 +1,42 @@
+name: Quality Gate (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      java_version:
+        required: false
+        type: string
+        default: '21'
+    secrets:
+      SONAR_HOST_URL:
+        required: true
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  quality-gate:
+    name: Lint, Test & SonarQube
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ inputs.java_version }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Compile
+        run: mvn compile -B
+
+      - name: Unit Tests
+        run: mvn test -B
+
+      - name: SonarQube Scan
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn sonar:sonar -B -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN
