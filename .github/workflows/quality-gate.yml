@@ -73,7 +73,12 @@ jobs:
       - name: Prepare coverage report for SonarQube
         run: |
           mkdir -p target/site/jacoco
-          cp coverage-report/*.xml target/site/jacoco/jacoco.xml
+          COVERAGE_XML=$(find coverage-report -name '*.xml' -type f | head -1)
+          if [ -z "$COVERAGE_XML" ]; then
+            echo "::error::No coverage XML in artifact (expected under coverage-report/). Check coverage_report_path in ci-config.json."
+            exit 1
+          fi
+          cp "$COVERAGE_XML" target/site/jacoco/jacoco.xml
 
       - name: SonarQube Scan
         env:
