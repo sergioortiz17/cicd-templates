@@ -1,0 +1,43 @@
+# cicd-templates
+
+Templates reutilizables de CI/CD para pipelines en GitHub Actions.
+
+## Workflows disponibles
+
+### ecs-build-deploy.yml
+
+Pipeline para construir imagen Docker, subirla a Amazon ECR y desplegar en ECS.
+
+**Inputs:**
+- `app_name` (requerido): Nombre de la aplicación
+- `ecr_repository` (requerido): Nombre del repositorio ECR
+- `ecs_cluster` (requerido): Nombre del cluster ECS
+- `ecs_service` (requerido): Nombre del servicio ECS
+- `aws_region` (opcional): Región AWS (default: us-east-1)
+
+**Secrets:**
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
+## Uso
+
+Desde otro repositorio (ej: java-cdk-tools-dev):
+
+```yaml
+jobs:
+  deploy:
+    uses: TU_ORG/cicd-templates/.github/workflows/ecs-build-deploy.yml@main
+    with:
+      app_name: mi-app
+      ecr_repository: mi-app
+      ecs_cluster: mi-cluster
+      ecs_service: mi-servicio
+    secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+```
+
+## Requisitos
+
+- El repositorio que llama debe tener un Dockerfile en la raíz
+- La infraestructura ECR y ECS debe existir (desplegada con infralive)
