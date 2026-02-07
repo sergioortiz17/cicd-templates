@@ -54,11 +54,6 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Download checkstyle report
-        uses: actions/download-artifact@v4
-        with:
-          name: checkstyle-report
-
       - name: Checkout cicd-templates
         uses: actions/checkout@v4
         with:
@@ -66,13 +61,16 @@ jobs:
           ref: main
           path: cicd-templates
 
+      - name: Checkstyle
+        run: mvn checkstyle:checkstyle -B -Dcheckstyle.failOnViolation=false
+
       - name: Convert Checkstyle to Generic Issue Data
         run: |
-          CHECKSTYLE_XML=$(find checkstyle-report -name '*.xml' -type f | head -1)
-          if [ -z "$CHECKSTYLE_XML" ]; then
-            echo '{"rules":[],"issues":[]}' > sonar-external-issues.json
-          else
+          CHECKSTYLE_XML="${{ inputs.checkstyle_report_path }}"
+          if [ -f "$CHECKSTYLE_XML" ]; then
             python3 cicd-templates/scripts/checkstyle-to-generic-issues.py "$CHECKSTYLE_XML" sonar-external-issues.json
+          else
+            echo '{"rules":[],"issues":[]}' > sonar-external-issues.json
           fi
 
       - name: Upload sonar-external-issues.json
