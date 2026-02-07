@@ -75,6 +75,13 @@ jobs:
             python3 cicd-templates/scripts/checkstyle-to-generic-issues.py "$CHECKSTYLE_XML" sonar-external-issues.json
           fi
 
+      - name: Upload sonar-external-issues.json
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonar-external-issues
+          path: sonar-external-issues.json
+          retention-days: 7
+
       - name: Unit Tests
         run: mvn test -B
 
