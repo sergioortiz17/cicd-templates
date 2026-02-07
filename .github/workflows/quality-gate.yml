@@ -73,8 +73,13 @@ jobs:
       - name: Prepare coverage report for SonarQube
         run: |
           mkdir -p target/site/jacoco
-          # El artifact se sube como _coverage_artifact/jacoco.xml (java-test normaliza desde coverage_report_path de la app)
-          cp coverage-report/_coverage_artifact/jacoco.xml target/site/jacoco/jacoco.xml
+          COVERAGE_XML=$(find coverage-report -name '*.xml' -type f | head -1)
+          if [ -z "$COVERAGE_XML" ]; then
+            echo "::error::No XML in coverage-report artifact. Contents:"
+            ls -laR coverage-report
+            exit 1
+          fi
+          cp "$COVERAGE_XML" target/site/jacoco/jacoco.xml
 
       - name: SonarQube Scan
         env:
