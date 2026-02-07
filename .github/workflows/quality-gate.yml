@@ -29,16 +29,9 @@ jobs:
       java_version: ${{ inputs.java_version }}
       lint_report_path: ${{ inputs.checkstyle_report_path }}
 
-  test:
-    name: Test
-    uses: ./.github/workflows/java-test.yml
-    with:
-      java_version: ${{ inputs.java_version }}
-      coverage_report_path: ${{ inputs.coverage_report_path }}
-
-  sonar:
-    name: SonarQube
-    needs: [lint, test]
+  test-and-sonar:
+    name: Test & SonarQube
+    needs: [lint]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -62,24 +55,11 @@ jobs:
         with:
           name: checkstyle-report
 
-      - name: Download coverage report
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-report
+      - name: Unit Tests
+        run: mvn test -B
 
       - name: Compile
         run: mvn compile -B
-
-      - name: Prepare coverage report for SonarQube
-        run: |
-          mkdir -p target/site/jacoco
-          COVERAGE_XML=$(find coverage-report -name '*.xml' -type f | head -1)
-          if [ -z "$COVERAGE_XML" ]; then
-            echo "::error::No XML in coverage-report artifact. Contents:"
-            ls -laR coverage-report
-            exit 1
-          fi
-          cp "$COVERAGE_XML" target/site/jacoco/jacoco.xml
 
       - name: SonarQube Scan
         env:
@@ -91,4 +71,4 @@ jobs:
             -Dsonar.host.url=$SONAR_HOST_URL \
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.java.checkstyle.reportPaths="$CHECKSTYLE_FILE" \
-            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
+            -Dsonar.coverage.jacoco.xmlReportPaths=${{ inputs.coverage_report_path }}
