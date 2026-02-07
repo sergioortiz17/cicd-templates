@@ -82,6 +82,7 @@ def convert(checkstyle_path: str, output_path: str) -> None:
                     "engineId": ENGINE_ID,
                     "cleanCodeAttribute": "FORMATTED",
                     "type": "CODE_SMELL",
+                    "severity": severity,
                     "impacts": [{"softwareQuality": "MAINTAINABILITY", "severity": impact_sev}],
                 }
 
