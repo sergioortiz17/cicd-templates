@@ -10,12 +10,25 @@ import xml.etree.ElementTree as ET
 
 ENGINE_ID = "checkstyle"
 
-# Mapeo Checkstyle severity -> SonarQube
+# Mapeo Checkstyle severity -> SonarQube (Standard Experience)
 SEVERITY_MAP = {
     "error": "MAJOR",
     "warning": "MINOR",
     "info": "INFO",
 }
+
+# Mapeo para impacts (MQR): BLOCKER, HIGH, MEDIUM, LOW, INFO
+IMPACT_SEVERITY_MAP = {
+    "BLOCKER": "BLOCKER",
+    "CRITICAL": "HIGH",
+    "MAJOR": "MEDIUM",
+    "MINOR": "LOW",
+    "INFO": "INFO",
+}
+
+
+def _to_impact_severity(standard_severity: str) -> str:
+    return IMPACT_SEVERITY_MAP.get(standard_severity, "MEDIUM")
 
 
 def extract_rule_id(source: str) -> str:
@@ -61,6 +74,7 @@ def convert(checkstyle_path: str, output_path: str) -> None:
             severity = SEVERITY_MAP.get(severity_in, "MINOR")
 
             if rule_id not in rules_seen:
+                impact_sev = _to_impact_severity(severity)
                 rules_seen[rule_id] = {
                     "id": rule_id,
                     "name": f"Checkstyle: {rule_id}",
@@ -68,7 +82,7 @@ def convert(checkstyle_path: str, output_path: str) -> None:
                     "engineId": ENGINE_ID,
                     "cleanCodeAttribute": "FORMATTED",
                     "type": "CODE_SMELL",
-                    "severity": severity,
+                    "impacts": [{"softwareQuality": "MAINTAINABILITY", "severity": impact_sev}],
                 }
 
             text_range = {"startLine": line}
@@ -82,7 +96,6 @@ def convert(checkstyle_path: str, output_path: str) -> None:
                     "filePath": rel_path,
                     "textRange": text_range,
                 },
-                "severity": severity,
             })
 
     report = {
