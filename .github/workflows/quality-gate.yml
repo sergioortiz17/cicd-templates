@@ -14,13 +14,31 @@ on:
         required: true
 
 jobs:
-  quality-gate:
-    name: Lint, Test & SonarQube
+  lint:
+    name: Lint
+    uses: ./.github/workflows/java-lint.yml
+    with:
+      java_version: ${{ inputs.java_version }}
+
+  test:
+    name: Test
+    uses: ./.github/workflows/java-test.yml
+    with:
+      java_version: ${{ inputs.java_version }}
+
+  sonar:
+    name: SonarQube
+    needs: [lint, test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -29,14 +47,31 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      - name: Download checkstyle report
+        uses: actions/download-artifact@v4
+        with:
+          name: checkstyle-report
+
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+
       - name: Compile
         run: mvn compile -B
 
-      - name: Unit Tests
-        run: mvn test -B
+      - name: Prepare coverage report for SonarQube
+        run: |
+          mkdir -p target/site/jacoco
+          cp coverage-report/jacoco.xml target/site/jacoco/jacoco.xml
 
       - name: SonarQube Scan
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn sonar:sonar -B -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN
+        run: |
+          mvn sonar:sonar -B \
+            -Dsonar.host.url=$SONAR_HOST_URL \
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.java.checkstyle.reportPaths=checkstyle-report/checkstyle-result.xml \
+            -Dsonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml

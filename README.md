@@ -6,7 +6,7 @@ Templates reutilizables de CI/CD para pipelines en GitHub Actions.
 
 ### quality-gate.yml
 
-Pipeline de calidad: compile, unit tests y SonarQube.
+Pipeline de calidad: lint (Checkstyle), unit tests y SonarQube. Llama a java-lint.yml y java-test.yml, descarga los reportes y los pasa a SonarQube.
 
 **Secrets:**
 - `SONAR_HOST_URL` - URL del servidor SonarQube (ej: http://X.X.X.X:9000)
@@ -14,6 +14,14 @@ Pipeline de calidad: compile, unit tests y SonarQube.
 
 **Inputs:**
 - `java_version` (opcional) - Versión Java (default: 21)
+
+### java-lint.yml
+
+Ejecuta Checkstyle y sube el reporte como artifact para que SonarQube lo consuma.
+
+### java-test.yml
+
+Ejecuta unit tests (mvn test) y sube el reporte de cobertura Jacoco como artifact.
 
 ### ecs-build-deploy.yml
 
