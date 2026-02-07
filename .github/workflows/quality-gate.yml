@@ -40,6 +40,9 @@ jobs:
     name: SonarQube
     needs: [lint, test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: none
 
     steps:
       - name: Checkout
